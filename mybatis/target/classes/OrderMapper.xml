@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace(命名空间)：映射文件的唯一标识 -->
+<mapper namespace="cn.itcast.mapper.OrderMapper">
+    <cache ></cache>
+
+    <resultMap id="orderUserDetailItemMap" type="Order" autoMapping="true" >
+        <!--
+			association:一对一的映射
+			property：pojo内中属性名
+			javaType：属性名对应的java类型
+			autoMapping:开启自动映射
+			子标签：参照resultMap
+		 -->
+        <id column="id" property="id"/>
+        <association property="user" javaType="User" autoMapping="true">
+            <id column="user_id" property="id" ></id>
+        </association>
+        <!--
+			collection:一对多的查询
+			property:pojo内中属性名
+			javaType：集合类型
+			ofType：集合中的元素类型，集合泛型
+			autoMapping：开启自动映射
+			子标签：参照resultMap
+		 -->
+        <collection property="detailList" javaType="list" ofType="Orderdetail" autoMapping="true">
+            <id column="detail_id" property="id"/>
+            <association property="item" javaType="Item" autoMapping="true" >
+                <id column="id" property="id" ></id>
+            </association>
+        </collection>
+    </resultMap>
+
+    <resultMap id="orderUserDetailMap" type="Order" autoMapping="true" >
+        <!--
+			association:一对一的映射
+			property：pojo内中属性名
+			javaType：属性名对应的java类型
+			autoMapping:开启自动映射
+			子标签：参照resultMap
+		 -->
+        <id column="id" property="id"/>
+        <association property="user" javaType="User" autoMapping="true">
+            <id column="user_id" property="id" ></id>
+        </association>
+        <!--
+			collection:一对多的查询
+			property:pojo内中属性名
+			javaType：集合类型
+			ofType：集合中的元素类型，集合泛型
+			autoMapping：开启自动映射
+			子标签：参照resultMap
+		 -->
+        <collection property="detailList" javaType="list" ofType="Orderdetail" autoMapping="true">
+            <id column="detail_id" property="id"/>
+        </collection>
+    </resultMap>
+   <!-- <resultMap type="Order" id="orderUserMap" autoMapping="true">
+        <id column="id" property="id"/>
+        <association property="user" javaType="User" autoMapping="true">
+            <id column="user_id" property="id"/>
+        </association>
+    </resultMap>-->
+    <!-- 进行懒加载测试.改进orderUserMap -->
+    <resultMap id="orderUserMap" type="Order" autoMapping="true" >
+        <id property="id" column="id" />
+        <association property="user" javaType="User" select="queryUser" column="user_id" />
+    </resultMap>
+    <select id="queryUser" resultType="User" >
+        SELECT * from tb_item WHERE id=#{id}
+    </select>
+
+    <select id="queryOrderWithUserDetailWithItem" resultMap="orderUserDetailItemMap">
+        select *,c.id as detail_id from tb_order a
+            LEFT JOIN tb_user b on a.user_id=b.id
+            LEFT JOIN tb_orderdetail c on a.id=c.order_id
+            LEFT JOIN tb_item d ON c.item_id = d.id
+        where a.order_number=#{number}
+    </select>
+    <select id="queryOrderWithUserDetail" resultMap="orderUserDetailMap">
+        select *,c.id as detail_id from tb_order a
+        LEFT JOIN tb_user b on a.user_id=b.id
+        LEFT JOIN tb_orderdetail c on a.id=c.order_id
+        where a.order_number=#{number}
+    </select>
+    <select id="queryOrderWithUser" resultMap="orderUserMap">
+        select * from tb_order a
+            LEFT JOIN tb_user b on a.user_id=b.id
+        where a.order_number = #{number}
+    </select>
+
+</mapper>

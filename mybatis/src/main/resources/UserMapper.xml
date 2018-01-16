@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace(命名空间)：映射文件的唯一标识 -->
+<mapper namespace="cn.itcast.mapper.UserMapper">
+
+    <select id="queryUserListByIds" resultType="User">
+        select * from tb_user where id in
+        <!--
+            foreach:遍历集合
+            collection：接收的集合参数
+            item：遍历的集合中的一个元素,即把遍历的每一个元素存放在其中，以便ognl表达式来取
+            separator:分隔符
+            open:以什么开始
+            close：以什么结束
+         -->
+        <foreach collection="ids" item="id" open="(" close=")" separator="," >
+            #{id}
+        </foreach>
+    </select>
+    <update id="updateUserSelective" >
+        UPDATE tb_user
+        <!--
+            set自动添加set关键字
+            也有一定的纠错功能：自动去掉sql语句块之后多余的一个逗号
+         -->
+        <set>
+            <if test="userName!=null and userName.trim()!=''">user_name = #{userName},</if>
+            <if test="password!=null and password.trim()!=''">password = #{password},</if>
+            <if test="name!=null and name.trim()!=''">name = #{name},</if>
+            <if test="age!=null">age = #{age},</if>
+            <if test="sex!=null">sex = #{sex}</if>
+        </set>
+        WHERE
+        (id = #{id});
+    </update>
+    <select id="queryUserListLikeUserNameAndAge" resultType="User">
+        SELECT <include refid="CommonSQL.commonSQL"/> FROM tb_user
+        <!--
+			自动添加where关键字
+			有一定的纠错功能：去掉sql语句块之前多余的一个and|or
+			通常结合if或者choose使用
+		 -->
+        <where>
+            <if test="userName!=null and userName.trim()!=''" > AND user_name LIKE "%"#{userName}"%"</if>
+            <if test="age != null" > AND age = #{age}</if>
+        </where>
+    </select>
+    <select id="queryUserListLikeUserNameOrAge" resultType="User" >
+        SELECT <include refid="CommonSQL.commonSQL"/> FROM tb_user WHERE sex=1
+        <choose>
+            <when test="userName!=null and userName.trim()!=''">
+                AND user_name LIKE "%"#{userName}"%"
+            </when>
+            <when test="age != null" >
+                AND age = #{age}
+            </when>
+            <otherwise>
+                AND user_name = 'zhangsan'
+            </otherwise>
+        </choose>
+    </select>
+    <select id="queryManUserListLikeUserName" resultType="User" >
+        SELECT <include refid="CommonSQL.commonSQL" /> FROM tb_user
+        WHERE sex=1
+        <if test="userName!=null">
+            AND user_name LIKE "%"#{userName}"%"
+        </if>
+    </select>
+    <!--
+   id: 唯一标示
+   type：返回值得包装类型
+   autoMapping： 强制采用驼峰命名法
+      -->
+    <resultMap id="UserMap" type="User" autoMapping="true" >
+        <id column="id" property="id" />
+    </resultMap>
+
+    <!-- 查询的statement，id：在同一个命名空间下的唯一标识，resultType：sql语句的结果集封装类型 -->
+    <select id="queryUserLikeUserName" resultMap="UserMap" >
+        SELECT <include refid="CommonSQL.commonSQL"/> FROM tb_user WHERE user_name LIKE '%' #{userName} '%'
+    </select>
+    <select id="loginMap" resultType="User" >
+        SELECT * from tb_user WHERE user_name=#{user.userName} AND password=#{user.password}
+    </select>
+    <select id="login" resultType="User" >
+        SELECT * from tb_user WHERE user_name=#{userName} AND password=#{password}
+    </select>
+    <select id="queryUserByTableName" resultType="User">
+        SELECT * FROM ${tableName}
+    </select>
+    <select id="queryUserById" resultType="User">
+        select * from tb_user where id=#{id}
+    </select>
+    <!---->
+    <select id="queryUserAll" resultType="User" >
+        select * from tb_user
+    </select>
+    <!--
+    useGeneratedKeys:开启主键回显
+    keyColumn： 对应数据库主键列名
+    keyProperty： 对应类主键的属性
+    -->
+    <insert id="insertUser" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        INSERT INTO tb_user (
+            user_name,
+            password,
+            name,
+            age,
+            sex,
+            birthday,
+            created,
+            updated
+        )
+        VALUES
+        (
+        #{userName},
+        #{password},
+        #{name},
+        #{age},
+        #{sex},
+        #{birthday},
+        NOW(),
+        NOW()
+        );
+    </insert>
+    <update id="updateUser" >
+        UPDATE tb_user
+        SET
+        user_name= #{userName},
+        password=#{password},
+        name=#{name},
+        age=#{age},
+        sex=#{sex},
+        birthday=#{birthday},
+        updated=NOW()
+        WHERE
+        (id=#{id});
+    </update>
+    <delete id="deleteUserById" parameterType="java.lang.Long">
+        DELETE FROM tb_user WHERE id=#{id}
+    </delete>
+
+</mapper>
